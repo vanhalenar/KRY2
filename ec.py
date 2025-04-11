@@ -3,7 +3,7 @@
 
 
 from typing import Tuple, Union
-
+import random
 
 class Curve:
     """
@@ -42,8 +42,39 @@ class Curve:
         Returns:
             None | tuple[int, int]: The result of the addition of the two points over the curve.
         """
+        if p is None:
+            return q
+        if q is None:
+            return p
+    
+        px = p[0]
+        py = p[1]
+        qx = q[0]
+        qy = q[1]
 
-        raise NotImplementedError("TODO: Implement this method")
+        if (px == qx) and (py != qy or py == 0):
+            return None
+
+        if (p == q):
+            s1 = (3*pow(px, 2, self.p) + self.a) % self.p
+            s2 = pow(2*py, -1, self.p)
+
+            s = (s1 * s2) % self.p
+
+            rx = (pow(s, 2, self.p) - 2*px) % self.p
+            ry = (s*(px - rx) - py) % self.p
+            
+            return (rx, ry)
+        else:
+            s1 = (qy - py) % self.p
+            s2 = pow(qx - px, -1, self.p)
+
+            s = (s1 * s2) % self.p
+
+            rx = (pow(s, 2, self.p) - (px + qx)) % self.p
+            ry = (s*(px - rx) - py) % self.p
+
+            return (rx, ry)
 
     def point_mul(self, k, p) -> Tuple[int, int]:
         """
@@ -56,8 +87,16 @@ class Curve:
         Returns:
             tuple[int, int]: The result of the multiplication of the point by the scalar over the curve.
         """
+        r = None
+        a = p
 
-        raise NotImplementedError("TODO: Implement this method")
+        while k > 0:
+            if k & 1:
+                r = self.point_add(r, a)
+            a = self.point_add(a, a)
+            k = k >> 1
+
+        return r
 
     def generate_keys(self) -> Tuple[int, Tuple[int, int]]:
         """
@@ -66,8 +105,10 @@ class Curve:
         Returns:
             tuple[int, tuple[int, int]]: The private key and the public key.
         """
-
-        raise NotImplementedError("TODO: Implement this method")
+        priv = random.randint(1, self.n - 1)
+        pub = self.point_mul(priv, self.G)
+        
+        return (priv, pub)
 
     def __repr__(self):
         """
@@ -94,3 +135,13 @@ curve_secp256r1 = Curve(
     n=0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551,
     h=0x01,
 )
+
+toy_curve = Curve(
+    p=17,                     
+    a=2,
+    b=2,
+    G=(5, 1),                
+    n=19,                   
+    h=1
+)
+
