@@ -26,10 +26,15 @@ The server should *not* output anything to the standard output, only to the afor
 
 import socket
 import argparse
+from typing import Tuple
+from ec import curve_secp256r1
+from common import p, g
+import random
 
 parser = argparse.ArgumentParser(prog="server.py", description="server for DH/ECDH key exchange")
 parser.add_argument("-p", "--port", required=True)
 parser.add_argument("-e", "--ec", action="store_true")
+parser.add_argument("-d", "--debug", action="store_true")
 
 args = parser.parse_args()
 
@@ -37,15 +42,43 @@ HOST = "127.0.0.1"
 
 PORT = int(args.port)
 
+def debug_log(msg):
+    if args.debug:
+        print(msg)
+
+def ecdh(conn: socket.socket):
+    with conn:
+        s_priv, s_pub = curve_secp256r1.generate_keys()
+        data = conn.recv(1024)
+        c_pub = curve_secp256r1.decode_pub(data)
+        pub_enc = curve_secp256r1.encode_pub(s_pub)
+        conn.sendall(pub_enc)
+        shared = curve_secp256r1.point_mul(s_priv, c_pub)
+        debug_log(curve_secp256r1.hash_pub(shared))
+        with open("server_ec.priv", "w") as f:
+            f.write(str(s_priv))
+        with open("server_ec.pub", "w") as f:
+            pub_dict = dict(x = s_pub[0], y = s_pub[1])
+            f.write(str(pub_dict))
+        with open("server_ec.shared", "w") as f:
+            f.write(curve_secp256r1.hash_pub(shared))
+
+def dh(conn: socket.socket):
+    with conn:
+        s_priv = random.getrandbits(256)
+        s_pub = pow(g, s_priv, p)
+        data = conn.recv(1024)
+        conn.sendall(s_pub.to_bytes(512, 'big'))
+        c_pub = int.from_bytes(data, 'big')
+        shared = pow(c_pub, s_priv, p)
+        debug_log(shared)
+
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
     s.listen()
     conn, addr = s.accept()
-    with conn:
-        print(f"Got connection from {addr}")
-        while True:
-            data = conn.recv(1024)
-            if not data:
-                break
-            print(f"recieved data: {data}")
-            conn.sendall(data)
+    if args.ec:
+        ecdh(conn)
+    else:
+        dh(conn)
+            

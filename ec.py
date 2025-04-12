@@ -4,6 +4,7 @@
 
 from typing import Tuple, Union
 import random
+import hashlib
 
 class Curve:
     """
@@ -109,6 +110,24 @@ class Curve:
         pub = self.point_mul(priv, self.G)
         
         return (priv, pub)
+    
+    def encode_pub(self, pub: Tuple[int, int]) -> bytes:
+        byte_len = (self.p.bit_length() + 7) // 8
+
+        x, y = pub
+        return x.to_bytes(byte_len, byteorder='big') + y.to_bytes(byte_len, byteorder='big')
+
+    def decode_pub(self, pub: bytes) -> Tuple[int, int]:
+        byte_len = (self.p.bit_length() + 7) // 8
+        
+        x = int.from_bytes(pub[:byte_len], byteorder='big')
+        y = int.from_bytes(pub[byte_len:], byteorder='big')
+        return (x,y)
+
+    def hash_pub(self, pub: Tuple[int, int]):
+        x, _ = pub
+        return hashlib.sha256(x.to_bytes((self.p.bit_length() + 7) // 8, byteorder="big")).hexdigest()
+
 
     def __repr__(self):
         """
