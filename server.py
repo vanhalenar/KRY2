@@ -24,4 +24,28 @@ $ python3 server.py --ec --port 12345
 The server should *not* output anything to the standard output, only to the aforementioned files.
 """
 
-raise NotImplementedError("TODO: Implement the server in this file.")
+import socket
+import argparse
+
+parser = argparse.ArgumentParser(prog="server.py", description="server for DH/ECDH key exchange")
+parser.add_argument("-p", "--port", required=True)
+parser.add_argument("-e", "--ec", action="store_true")
+
+args = parser.parse_args()
+
+HOST = "127.0.0.1"
+
+PORT = int(args.port)
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen()
+    conn, addr = s.accept()
+    with conn:
+        print(f"Got connection from {addr}")
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                break
+            print(f"recieved data: {data}")
+            conn.sendall(data)

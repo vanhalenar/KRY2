@@ -24,4 +24,22 @@ $ python3 client.py --ec --port 12345
 The client should *not* output anything to the standard output, only to the aforementioned files.
 """
 
-raise NotImplementedError("TODO: Implement the client in this file.")
+import socket
+import argparse
+
+parser = argparse.ArgumentParser(prog="server.py", description="server for DH/ECDH key exchange")
+parser.add_argument("-p", "--port", required=True)
+parser.add_argument("-e", "--ec", action="store_true")
+
+args = parser.parse_args()
+
+HOST = "127.0.0.1"
+
+PORT = int(args.port)
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))
+    s.sendall(b"Hello, world")
+    data = s.recv(1024)
+
+print(f"Received {data!r}")
