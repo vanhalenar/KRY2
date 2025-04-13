@@ -2,6 +2,7 @@
 """Module for Elliptic Curve (EC) operations from scratch."""
 
 
+import secrets
 from typing import Tuple, Union
 import random
 import hashlib
@@ -106,7 +107,7 @@ class Curve:
         Returns:
             tuple[int, tuple[int, int]]: The private key and the public key.
         """
-        priv = random.randint(1, self.n - 1)
+        priv = secrets.randbelow(self.n - 1) + 1 # random.randint(1, self.n - 1)
         pub = self.point_mul(priv, self.G)
         
         return (priv, pub)
@@ -115,18 +116,18 @@ class Curve:
         byte_len = (self.p.bit_length() + 7) // 8
 
         x, y = pub
-        return x.to_bytes(byte_len, byteorder='big') + y.to_bytes(byte_len, byteorder='big')
+        return x.to_bytes(byte_len, "big") + y.to_bytes(byte_len, "big")
 
     def decode_pub(self, pub: bytes) -> Tuple[int, int]:
         byte_len = (self.p.bit_length() + 7) // 8
         
-        x = int.from_bytes(pub[:byte_len], byteorder='big')
-        y = int.from_bytes(pub[byte_len:], byteorder='big')
+        x = int.from_bytes(pub[:byte_len], "big")
+        y = int.from_bytes(pub[byte_len:], "big")
         return (x,y)
 
     def hash_pub(self, pub: Tuple[int, int]):
         x, _ = pub
-        return hashlib.sha256(x.to_bytes((self.p.bit_length() + 7) // 8, byteorder="big")).hexdigest()
+        return hashlib.sha256(x.to_bytes((self.p.bit_length() + 7) // 8, "big")).hexdigest()
 
 
     def __repr__(self):

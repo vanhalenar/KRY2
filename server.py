@@ -26,10 +26,8 @@ The server should *not* output anything to the standard output, only to the afor
 
 import socket
 import argparse
-from typing import Tuple
 from ec import curve_secp256r1
-from common import p, g, dh_hash_pub, debug_log, HOST
-import random
+from common import p, g, dh_hash_pub, debug_log, HOST, dh_gen_priv
 
 parser = argparse.ArgumentParser(prog="server.py", description="server for DH/ECDH key exchange")
 parser.add_argument("-p", "--port", required=True)
@@ -48,7 +46,7 @@ def ecdh(conn: socket.socket):
         pub_enc = curve_secp256r1.encode_pub(s_pub)
         conn.sendall(pub_enc)
         shared = curve_secp256r1.point_mul(s_priv, c_pub)
-        debug_log(curve_secp256r1.hash_pub(shared))
+        debug_log(args, curve_secp256r1.hash_pub(shared))
         with open("server.priv", "w") as f:
             f.write(str(s_priv))
         with open("server.pub", "w") as f:
@@ -59,11 +57,11 @@ def ecdh(conn: socket.socket):
 
 def dh(conn: socket.socket):
     with conn:
-        s_priv = random.getrandbits(4096)
+        s_priv = dh_gen_priv() #random.getrandbits(4096)
         s_pub = pow(g, s_priv, p)
         data = conn.recv(8192)
-        conn.sendall(s_pub.to_bytes(8192, 'big'))
-        c_pub = int.from_bytes(data, 'big')
+        conn.sendall(s_pub.to_bytes(8192, "big"))
+        c_pub = int.from_bytes(data, "big")
         shared = pow(c_pub, s_priv, p)
         debug_log(args, dh_hash_pub(shared))
         with open("server.priv", "w") as f:
