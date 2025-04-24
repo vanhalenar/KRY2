@@ -4,7 +4,6 @@
 
 import secrets
 from typing import Tuple, Union
-import random
 import hashlib
 
 class Curve:
@@ -107,7 +106,6 @@ class Curve:
         Returns:
             tuple[int, tuple[int, int]]: The private key and the public key.
         """
-        #min_val = 2**(self.n.bit_length() - 1)
         priv = secrets.randbelow(self.n - 1) + 1
         pub = self.point_mul(priv, self.G)
         
@@ -156,13 +154,3 @@ curve_secp256r1 = Curve(
     n=0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551,
     h=0x01,
 )
-
-toy_curve = Curve(
-    p=17,                     
-    a=2,
-    b=2,
-    G=(5, 1),                
-    n=19,                   
-    h=1
-)
-
