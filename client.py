@@ -24,10 +24,13 @@ $ python3 client.py --ec --port 12345
 The client should *not* output anything to the standard output, only to the aforementioned files.
 """
 
+import random
+import secrets
 import socket
 import argparse
 from ec import curve_secp256r1
 from common import p, g, dh_hash_pub, debug_log, HOST, dh_gen_priv
+import time
 
 parser = argparse.ArgumentParser(prog="server.py", description="server for DH/ECDH key exchange")
 parser.add_argument("-p", "--port", required=True)
@@ -56,7 +59,7 @@ def ecdh(s: socket.socket):
 
 def dh(conn: socket.socket):
     with conn:
-        c_priv = dh_gen_priv() #random.getrandbits(4096)
+        c_priv = dh_gen_priv() #secrets.randbits(4096)
         c_pub = pow(g, c_priv, p)
         conn.sendall(c_pub.to_bytes(8192, "big"))
         data = conn.recv(8192)
@@ -71,9 +74,12 @@ def dh(conn: socket.socket):
             f.write(dh_hash_pub(shared))
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.connect((HOST, PORT))
+    start_time = time.time()
     if args.ec:
         ecdh(s)
     else:
         dh(s)
+    print("elapsed: ", time.time()-start_time)
 

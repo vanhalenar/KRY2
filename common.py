@@ -17,3 +17,7 @@ def dh_hash_pub(pub: int) -> str:
 
 def dh_gen_priv(p=p):
     return secrets.randbelow(p - 2) + 2
+
+def byte_length(i):
+    return (i.bit_length() + 7) // 8
+

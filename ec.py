@@ -107,7 +107,8 @@ class Curve:
         Returns:
             tuple[int, tuple[int, int]]: The private key and the public key.
         """
-        priv = secrets.randbelow(self.n - 1) + 1 # random.randint(1, self.n - 1)
+        #min_val = 2**(self.n.bit_length() - 1)
+        priv = secrets.randbelow(self.n - 1) + 1
         pub = self.point_mul(priv, self.G)
         
         return (priv, pub)

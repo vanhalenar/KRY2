@@ -57,7 +57,7 @@ def ecdh(conn: socket.socket):
 
 def dh(conn: socket.socket):
     with conn:
-        s_priv = dh_gen_priv() #random.getrandbits(4096)
+        s_priv = dh_gen_priv()
         s_pub = pow(g, s_priv, p)
         data = conn.recv(8192)
         conn.sendall(s_pub.to_bytes(8192, "big"))
@@ -72,6 +72,7 @@ def dh(conn: socket.socket):
             f.write(dh_hash_pub(shared))
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((HOST, PORT))
     s.listen()
     conn, addr = s.accept()
